@@ -70,7 +70,9 @@ HANDLE openBleInterfaceHandle(GUID interfaceUUID, DWORD dwDesiredAccess)
 	did.cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
 	dd.cbSize = sizeof(SP_DEVINFO_DATA);
 
-	for (DWORD i = 0; SetupDiEnumDeviceInterfaces(hDI, nullptr, &BluetoothInterfaceGUID, i, &did); i++)
+	DWORD i = 0;
+
+	for (i = 0; SetupDiEnumDeviceInterfaces(hDI, nullptr, &BluetoothInterfaceGUID, i, &did); i++)
 	{
 		SP_DEVICE_INTERFACE_DETAIL_DATA DeviceInterfaceDetailData{};
 
@@ -82,16 +84,26 @@ HANDLE openBleInterfaceHandle(GUID interfaceUUID, DWORD dwDesiredAccess)
 		{
 			int err = GetLastError();
 
-			if (err == ERROR_NO_MORE_ITEMS) break;
+			if (err == ERROR_NO_MORE_ITEMS)
+			{
+				break;
+			}
 
 			auto pInterfaceDetailData = (PSP_DEVICE_INTERFACE_DETAIL_DATA)GlobalAlloc(GPTR, size);
 
 			if (pInterfaceDetailData != nullptr)
 			{
+				if (handle != INVALID_HANDLE_VALUE && handle != nullptr)
+				{
+					CloseHandle(handle);
+				}
+
 				pInterfaceDetailData->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA);
 
 				if (!SetupDiGetDeviceInterfaceDetail(hDI, &did, pInterfaceDetailData, size, &size, &dd))
+				{
 					break;
+				}
 
 				handle = CreateFile(
 					pInterfaceDetailData->DevicePath,
@@ -103,15 +115,6 @@ HANDLE openBleInterfaceHandle(GUID interfaceUUID, DWORD dwDesiredAccess)
 					nullptr);
 
 				GlobalFree(pInterfaceDetailData);
-
-				if (handle == INVALID_HANDLE_VALUE)
-				{
-					stringstream stream;
-					stream << "Unable to file handle for interface UUID: ["
-						<< Utility::guidToString(BluetoothInterfaceGUID) << "]";
-
-					throw BleException(stream.str());
-				}
 			}
 			else
 			{
@@ -121,5 +124,16 @@ HANDLE openBleInterfaceHandle(GUID interfaceUUID, DWORD dwDesiredAccess)
 	}
 
 	SetupDiDestroyDeviceInfoList(hDI);
+
+	if (handle == INVALID_HANDLE_VALUE || handle == nullptr)
+	{
+		stringstream stream;
+		stream << "Unable to file handle for interface UUID: ["
+			<< Utility::guidToString(BluetoothInterfaceGUID) << "]";
+
+		throw BleException(stream.str());
+		//Utility::throwLastErrorException(stream.str());
+	}
+
 	return handle;
 }

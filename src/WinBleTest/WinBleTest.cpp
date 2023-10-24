@@ -198,28 +198,28 @@ int main()
 	{
 		BleDeviceEnumerator::enumerate();
 
-		for (BleDeviceInfo const *i : BleDeviceEnumerator::getBleDevices())
-			wcout << "Name: " << i->getName()
-			<< " HardwareId: " << i->getHardwareId()
-			<< " InstanceId: " << i->getInstanceId() << endl;
-		
-		if (BleDeviceEnumerator::getBleDevices().size() >= 1)
+		for (BleDeviceInfo const* i : BleDeviceEnumerator::getBleDevices())
 		{
+			wcout << "Name: " << i->getName()
+				<< " HardwareId: " << i->getHardwareId()
+				<< " InstanceId: " << i->getInstanceId() << endl;
+
 			cout << "Opening device" << endl;
 
-			auto bleDevice = BleDevice(BleDeviceEnumerator::getBleDevices().front()->getInstanceId());
+			auto bleDevice = BleDevice(i->getInstanceId());
 
 			bleDevice.enumerateBleServices();
 
 			displayServices(bleDevice);
 
-			BleDevice::BleGattServices const &services = bleDevice.getBleGattServices();
+			BleDevice::BleGattServices const& services = bleDevice.getBleGattServices();
 
 			displayDeviceInformation(services);
 
 			testSerialService(services);
 		}
-		else
+
+		if (BleDeviceEnumerator::getBleDevices().size() < 1)
 		{
 			cout << "No devices found" << endl;
 		}

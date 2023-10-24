@@ -74,16 +74,26 @@ HANDLE BleDevice::getBleDeviceHandle(const wstring& deviceInstanceId)
 		{
 			int err = GetLastError();
 
-			if (err == ERROR_NO_MORE_ITEMS) break;
+			if (err == ERROR_NO_MORE_ITEMS)
+			{
+				break;
+			}
 
 			auto pInterfaceDetailData = (PSP_DEVICE_INTERFACE_DETAIL_DATA)GlobalAlloc(GPTR, size);
 
 			if (pInterfaceDetailData != nullptr)
 			{
+				if (handle != INVALID_HANDLE_VALUE && handle != nullptr)
+				{
+					CloseHandle(handle);
+				}
+
 				pInterfaceDetailData->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA);
 
 				if (!SetupDiGetDeviceInterfaceDetail(hDI, &did, pInterfaceDetailData, size, &size, &dd))
+				{
 					break;
+				}
 
 				handle = CreateFile(
 					pInterfaceDetailData->DevicePath,
@@ -105,7 +115,7 @@ HANDLE BleDevice::getBleDeviceHandle(const wstring& deviceInstanceId)
 
 	SetupDiDestroyDeviceInfoList(hDI);
 
-	if (i == 0)
+	if (handle == INVALID_HANDLE_VALUE || handle == nullptr)
 	{
 		stringstream msg;
 		msg << "Device interface UUID: ["
