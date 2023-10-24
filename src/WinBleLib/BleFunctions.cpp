@@ -55,15 +55,16 @@ HANDLE openBleInterfaceHandle(GUID interfaceUUID, DWORD dwDesiredAccess)
 	SP_DEVICE_INTERFACE_DATA did{};
 	SP_DEVINFO_DATA dd{};
 	GUID BluetoothInterfaceGUID = interfaceUUID;
-	HANDLE hComm = NULL;
+	HANDLE handle = nullptr;
 
-	if ((hDI = SetupDiGetClassDevs(&BluetoothInterfaceGUID, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT)) == INVALID_HANDLE_VALUE)
+	if ((hDI = SetupDiGetClassDevs(&BluetoothInterfaceGUID, nullptr, nullptr, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT)) == INVALID_HANDLE_VALUE)
 	{
 		stringstream stream;
 		stream << "Unable to open device information set for device interface UUID: ["
-			<< Util.guidToString(BluetoothInterfaceGUID) << "]";
+			<< Utility::guidToString(BluetoothInterfaceGUID) << "]";
 
-		Util.throwLastErrorException(stream.str());
+		Utility::throwLastErrorException(stream.str());
+
 	}
 
 	did.cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
@@ -71,7 +72,7 @@ HANDLE openBleInterfaceHandle(GUID interfaceUUID, DWORD dwDesiredAccess)
 
 	DWORD i = 0;
 
-	for (i = 0; SetupDiEnumDeviceInterfaces(hDI, NULL, &BluetoothInterfaceGUID, i, &did); i++)
+	for (i = 0; SetupDiEnumDeviceInterfaces(hDI, nullptr, &BluetoothInterfaceGUID, i, &did); i++)
 	{
 		SP_DEVICE_INTERFACE_DETAIL_DATA DeviceInterfaceDetailData{};
 
@@ -79,48 +80,60 @@ HANDLE openBleInterfaceHandle(GUID interfaceUUID, DWORD dwDesiredAccess)
 
 		DWORD size = 0;
 
-		if (!SetupDiGetDeviceInterfaceDetail(hDI, &did, NULL, 0, &size, 0))
+		if (!SetupDiGetDeviceInterfaceDetail(hDI, &did, nullptr, 0, &size, nullptr))
 		{
 			int err = GetLastError();
 
-			if (err == ERROR_NO_MORE_ITEMS) break;
-
-			PSP_DEVICE_INTERFACE_DETAIL_DATA pInterfaceDetailData = (PSP_DEVICE_INTERFACE_DETAIL_DATA)GlobalAlloc(GPTR, size);
-
-			if (pInterfaceDetailData != NULL)
+			if (err == ERROR_NO_MORE_ITEMS)
 			{
+				break;
+			}
+
+			auto pInterfaceDetailData = (PSP_DEVICE_INTERFACE_DETAIL_DATA)GlobalAlloc(GPTR, size);
+
+			if (pInterfaceDetailData != nullptr)
+			{
+				if (handle != INVALID_HANDLE_VALUE && handle != nullptr)
+				{
+					CloseHandle(handle);
+				}
+
 				pInterfaceDetailData->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA);
 
 				if (!SetupDiGetDeviceInterfaceDetail(hDI, &did, pInterfaceDetailData, size, &size, &dd))
+				{
 					break;
+				}
 
-				hComm = CreateFile(
+				handle = CreateFile(
 					pInterfaceDetailData->DevicePath,
 					dwDesiredAccess,
 					FILE_SHARE_READ | FILE_SHARE_WRITE,
-					NULL,
+					nullptr,
 					OPEN_EXISTING,
 					0,
-					NULL);
+					nullptr);
 
 				GlobalFree(pInterfaceDetailData);
-
-				if (hComm == INVALID_HANDLE_VALUE)
-				{
-					stringstream stream;
-					stream << "Unable to file handle for interface UUID: ["
-						<< Util.guidToString(BluetoothInterfaceGUID) << "]";
-
-					Util.throwLastErrorException(stream.str());
-				}
 			}
 			else
 			{
-				throw new WinBleException("Unable to allocate device interface detail data");
+				throw BleException("Unable to allocate device interface detail data");
 			}
 		}
 	}
 
 	SetupDiDestroyDeviceInfoList(hDI);
-	return hComm;
+
+	if (handle == INVALID_HANDLE_VALUE || handle == nullptr)
+	{
+		stringstream stream;
+		stream << "Unable to file handle for interface UUID: ["
+			<< Utility::guidToString(BluetoothInterfaceGUID) << "]";
+
+		throw BleException(stream.str());
+		//Utility::throwLastErrorException(stream.str());
+	}
+
+	return handle;
 }

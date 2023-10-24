@@ -24,7 +24,7 @@ SOFTWARE.
 */
 
 #include "BleGattDescriptor.h"
-#include "FileHandleWrapper.h"
+#include "HandleWrapper.h"
 #include "BleFunctions.h"
 #include "WinBleException.h"
 #include "Utility.h"
@@ -35,7 +35,7 @@ using namespace std;
 
 void BleGattDescriptor::setDescriptorValue(PBTH_LE_GATT_DESCRIPTOR_VALUE newValue)
 {
-	FileHandleWrapper hBleService(
+	HandleWrapper hBleService(
 		openBleInterfaceHandle(
 			mapServiceUUID(&_pGattService->ServiceUuid),
 			GENERIC_READ | GENERIC_WRITE));
@@ -47,11 +47,7 @@ void BleGattDescriptor::setDescriptorValue(PBTH_LE_GATT_DESCRIPTOR_VALUE newValu
 		BLUETOOTH_GATT_FLAG_NONE);
 
 	if (S_OK != hr) {
-		stringstream msg;
-		msg << "Unable to set the descriptor value. Reason: ["
-			<< Util.getLastErrorString(hr) << "]";
-
-		throw WinBleException(msg.str());
+		Utility::throwHResultException("Unable to set the descriptor value.", hr);
 	}
 }
 
@@ -68,31 +64,27 @@ BleGattDescriptor::BleGattDescriptor(
 	_pGattDescriptor = pGattDescriptor;
 }
 
-BleGattDescriptor::~BleGattDescriptor()
-{
-}
-
-USHORT BleGattDescriptor::getServiceHandle()
+USHORT BleGattDescriptor::getServiceHandle() const
 {
 	return _pGattDescriptor->ServiceHandle;
 }
 
-USHORT BleGattDescriptor::getCharacteristicHandle()
+USHORT BleGattDescriptor::getCharacteristicHandle() const
 {
 	return _pGattDescriptor->CharacteristicHandle;
 }
 
-BTH_LE_GATT_DESCRIPTOR_TYPE BleGattDescriptor::getDescriptorType()
+BTH_LE_GATT_DESCRIPTOR_TYPE BleGattDescriptor::getDescriptorType() const
 {
 	return _pGattDescriptor->DescriptorType;
 }
 
-BTH_LE_UUID BleGattDescriptor::getDescriptorUuid()
+BTH_LE_UUID BleGattDescriptor::getDescriptorUuid() const
 {
 	return _pGattDescriptor->DescriptorUuid;
 }
 
-USHORT BleGattDescriptor::getAttributeHandle()
+USHORT BleGattDescriptor::getAttributeHandle() const
 {
 	return _pGattDescriptor->AttributeHandle;
 }
@@ -101,7 +93,7 @@ BleGattDescriptorValue* BleGattDescriptor::getValue()
 {
 	USHORT descValueDataSize;
 
-	FileHandleWrapper hBleService(
+	HandleWrapper hBleService(
 		openBleInterfaceHandle(
 			mapServiceUUID(&_pGattService->ServiceUuid), 
 			GENERIC_READ));
@@ -110,24 +102,20 @@ BleGattDescriptorValue* BleGattDescriptor::getValue()
 		hBleService.get(),
 		_pGattDescriptor,
 		0,
-		NULL,
+		nullptr,
 		&descValueDataSize,
 		BLUETOOTH_GATT_FLAG_NONE);
 
 	if (HRESULT_FROM_WIN32(ERROR_MORE_DATA) != hr)
 	{
-		stringstream msg;
-		msg << "Unable to determine the descriptor value size. Reason: ["
-			<< Util.getLastErrorString(hr) << "]";
-
-		throw WinBleException(msg.str());
+		Utility::throwHResultException("Unable to determine the descriptor value size.", hr);
 	}
 
-	PBTH_LE_GATT_DESCRIPTOR_VALUE pDescValueBuffer = (PBTH_LE_GATT_DESCRIPTOR_VALUE)malloc(descValueDataSize);
+	auto pDescValueBuffer = (PBTH_LE_GATT_DESCRIPTOR_VALUE)malloc(descValueDataSize);
 
-	if (NULL == pDescValueBuffer)
+	if (pDescValueBuffer == nullptr)
 	{
-		Util.handleMallocFailure(descValueDataSize);
+		Utility::handleMallocFailure(descValueDataSize);
 	}
 	else
 	{
@@ -139,16 +127,12 @@ BleGattDescriptorValue* BleGattDescriptor::getValue()
 		_pGattDescriptor,
 		(ULONG)descValueDataSize,
 		pDescValueBuffer,
-		NULL,
+		nullptr,
 		BLUETOOTH_GATT_FLAG_NONE);
 
-	if (S_OK != hr)
+	if (hr != S_OK)
 	{
-		stringstream msg;
-		msg << "Unable to read the descriptor value size. Reason: ["
-			<< Util.getLastErrorString(hr) << "]";
-
-		throw WinBleException(msg.str());
+		Utility::throwHResultException("Unable to read the descriptor value size.", hr);
 	}
 	
 	return new BleGattDescriptorValue(pDescValueBuffer);

@@ -23,10 +23,10 @@ SOFTWARE.
 
 */
 
-#include <windows.h>
+#include <Windows.h>
 #include <bthdef.h>
 #include <devguid.h>
-#include <setupapi.h>
+#include <SetupAPI.h>
 #include <bluetoothleapis.h>
 
 #include "BleDeviceEnumerator.h"
@@ -38,7 +38,7 @@ SOFTWARE.
 
 using namespace std;
 
-BleDeviceEnumerator BleEnumerator;
+list<BleDeviceInfo*> BleDeviceEnumerator::_bleEnumeratedDevices;
 
 inline std::wstring& rtrim_null(std::wstring& s)
 {
@@ -60,7 +60,7 @@ wstring BleDeviceEnumerator::getDeviceRegistryStringProperty(HDEVINFO hDI, SP_DE
 		hDI,
 		&did,
 		property,
-		NULL,
+		nullptr,
 		(PBYTE)&text[0],
 		bufferSize,
 		&bufferSize))
@@ -74,10 +74,6 @@ wstring BleDeviceEnumerator::getDeviceRegistryStringProperty(HDEVINFO hDI, SP_DE
 	return text;
 }
 
-BleDeviceEnumerator::BleDeviceEnumerator()
-{
-}
-
 BleDeviceEnumerator::~BleDeviceEnumerator()
 {
 	_bleEnumeratedDevices.clear();
@@ -88,20 +84,19 @@ void BleDeviceEnumerator::enumerate()
 	_bleEnumeratedDevices.clear();
 
 	SP_DEVINFO_DATA did{};
-	DWORD i;
-
-	HDEVINFO hDI = SetupDiGetClassDevs(&GUID_BLUETOOTHLE_DEVICE_INTERFACE, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
+	
+	HDEVINFO hDI = SetupDiGetClassDevs(&GUID_BLUETOOTHLE_DEVICE_INTERFACE, nullptr, nullptr, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
 
 	if (INVALID_HANDLE_VALUE == hDI)
 	{
-		Util.throwLastErrorException("Unable to get handle to device information elements.");
+		throw BleException("Unable to get handle to device information elements.");
 	}
 
 	did.cbSize = sizeof(SP_DEVINFO_DATA);
 
 	try
 	{
-		for (i = 0; SetupDiEnumDeviceInfo(hDI, i, &did); i++)
+		for (DWORD i = 0; SetupDiEnumDeviceInfo(hDI, i, &did); i++)
 		{
 			wstring name = getDeviceRegistryStringProperty(hDI, did, SPDRP_FRIENDLYNAME);
 

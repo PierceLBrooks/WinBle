@@ -26,51 +26,57 @@ SOFTWARE.
 #ifndef UTILITY_H
 #define UTILITY_H
 
-using namespace std;
-
 #include <Windows.h>
 #include <string>
+
+using namespace std;
 
 /// <summary>
 /// A utility class of helper methods
 /// </summary>
-class Utility
+class Utility final
 {
-	public:
-		Utility();
+private:
+	Utility() = delete;
+public:
+	
+	~Utility() = default;
 
-		~Utility();
+	/// <summary>
+	/// Gets the last win32 error as a string
+	/// </summary>
+	static string getLastErrorString(DWORD lastError);
 
-		/// <summary>
-		/// Gets the last win32 error as a string
-		/// </summary>
-		string getLastErrorString(DWORD lastError);
+	/// <summary>
+	/// Converts a GUID to a string
+	/// </summary>
+	/// <param name="uuid">The guid to convert</param>
+	static string guidToString(GUID uuid);
 
-		/// <summary>
-		/// Converts a GUID to a string
-		/// </summary>
-		/// <param name="uuid">The guid to convert</param>
-		string guidToString(GUID uuid);
+	/// <summary>
+	/// Converts a wide string to a narrow string
+	/// </summary>
+	/// <param name="value">The string to convert</param>
+	static string convertToString(const wstring& value);
 
-		/// <summary>
-		/// Converts a wide string to a narrow string
-		/// </summary>
-		/// <param name="value">The string to convert</param>
-		string convertToString(wstring value);
+	/// <summary>
+	/// Handles memory allocation failure
+	/// </summary>
+	/// <param name="size">The size of bytes that failed to allocate</param>
+	static void handleMallocFailure(unsigned long size);
 
-		/// <summary>
-		/// Handles memory allocation failure
-		/// </summary>
-		/// <param name="size">The size of bytes that failed to allocate</param>
-		void handleMallocFailure(unsigned long size);
+	/// <summary>
+	/// Throws a ble exception with a last error code details
+	/// </summary>
+	/// <param name="message">The exception message</param>
+	static void throwLastErrorException(const string& message);
 
-		/// <summary>
-		/// Throws a win ble exception with a last error code
-		/// </summary>
-		/// <param name="message">The exception message</param>
-		void throwLastErrorException(const string& message);
+	/// <summary>
+	/// Throws a ble exception
+	/// </summary>
+	/// <param name="message">The exception message</param>
+	/// <param name="result">The HRESULT value</param>
+	static void throwHResultException(const string& message, const HRESULT result);
 };
-
-extern Utility Util;
 
 #endif

@@ -23,27 +23,27 @@ SOFTWARE.
 
 */
 
-#ifndef FILEHANDLEWRAPPER_H
-#define FILEHANDLEWRAPPER_H
+#ifndef HANDLEWRAPPER_H
+#define HANDLEWRAPPER_H
 
-#include <windows.h>
+#include <Windows.h>
 
 /// <summary>
 /// A class for wrapping windows handles created with CreateFile
 /// </summary>
-class FileHandleWrapper
+class HandleWrapper
 {
 private:
 	HANDLE _handle = nullptr;
 
-	FileHandleWrapper(const FileHandleWrapper &obj);
+	HandleWrapper(const HandleWrapper &obj);
 
-	FileHandleWrapper& FileHandleWrapper::operator=(const FileHandleWrapper& other);
+	HandleWrapper& HandleWrapper::operator=(const HandleWrapper& other);
 
 public:
-	FileHandleWrapper(HANDLE handle);
+	explicit HandleWrapper(HANDLE handle);
 
-	~FileHandleWrapper();
+	~HandleWrapper();
 
 	HANDLE get();
 };

@@ -26,19 +26,9 @@ SOFTWARE.
 #include "Utility.h"
 #include "WinBleException.h"
 
-#include <windows.h>
+#include <Windows.h>
 #include <codecvt>
 #include <sstream>
-
-Utility Util;
-
-Utility::Utility()
-{
-}
-
-Utility::~Utility()
-{
-}
 
 string Utility::getLastErrorString(DWORD lastError)
 {
@@ -48,7 +38,7 @@ string Utility::getLastErrorString(DWORD lastError)
 
 	LPSTR messageBuffer = nullptr;
 	size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-		NULL, lastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+		nullptr, lastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, nullptr);
 
 	string message(messageBuffer, size);
 
@@ -60,7 +50,7 @@ string Utility::getLastErrorString(DWORD lastError)
 string Utility::guidToString(GUID uuid)
 {
 	string guid;
-	RPC_CSTR szUuid = NULL;
+	RPC_CSTR szUuid = nullptr;
 	if (::UuidToStringA(&uuid, &szUuid) == RPC_S_OK)
 	{
 		guid = (char*)szUuid;
@@ -70,7 +60,7 @@ string Utility::guidToString(GUID uuid)
 	return guid;
 }
 
-string Utility::convertToString(wstring value)
+string Utility::convertToString(const wstring& value)
 {
 	using convert_type = codecvt_utf8<wchar_t>;
 	wstring_convert<convert_type, wchar_t> converter;
@@ -94,4 +84,25 @@ void Utility::throwLastErrorException(const string& message)
 		" Reason: [" << getLastErrorString(lasterror) << "]";
 
 	throw WinBleException(stream.str());
+}
+
+void Utility::throwLastErrorException(const string& message)
+{
+	stringstream stream;
+	DWORD lasterror = GetLastError();
+	stream << message <<
+		" LastError: " << std::hex << lasterror <<
+		" Reason: [" << getLastErrorString(lasterror) << "]";
+
+	throw BleException(stream.str());
+}
+
+void Utility::throwHResultException(const string& message, const HRESULT result)
+{
+	stringstream stream;
+	stream << message <<
+		" HRESULT: " << std::hex << result <<
+		" Reason: [" << getLastErrorString(result) << "]";
+
+	throw BleException(stream.str());
 }

@@ -23,15 +23,15 @@ SOFTWARE.
 
 */
 
-#include "FileHandleWrapper.h"
+#include "HandleWrapper.h"
 
 
-FileHandleWrapper::FileHandleWrapper(HANDLE handle) : _handle(handle)
+HandleWrapper::HandleWrapper(HANDLE handle) : _handle(handle)
 {
 }
 
 
-FileHandleWrapper::~FileHandleWrapper()
+HandleWrapper::~HandleWrapper()
 {
 	if (_handle)
 	{
@@ -39,7 +39,7 @@ FileHandleWrapper::~FileHandleWrapper()
 	}
 }
 
-HANDLE FileHandleWrapper::get()
+HANDLE HandleWrapper::get()
 {
 	return _handle;
 }

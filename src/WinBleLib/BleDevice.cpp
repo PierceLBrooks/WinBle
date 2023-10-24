@@ -23,13 +23,9 @@ SOFTWARE.
 
 */
 
-#include <windows.h>
-#include <Setupapi.h>
-#include <BluetoothAPIs.h>
-
-#pragma comment(lib, "Rpcrt4")
-#pragma comment(lib, "SetupAPI")
-#pragma comment(lib, "BluetoothAPIs")
+#include <Windows.h>
+#include <SetupAPI.h>
+#include <bluetoothapis.h>
 
 #include "WinBleException.h"
 #include "BleDevice.h"
@@ -37,24 +33,28 @@ SOFTWARE.
 
 #include <sstream>
 
+#pragma comment(lib, "Rpcrt4")
+#pragma comment(lib, "SetupAPI")
+#pragma comment(lib, "BluetoothAPIs")
+
 using namespace std;
 
-HANDLE BleDevice::getBleDeviceHandle(wstring deviceInstanceId)
+HANDLE BleDevice::getBleDeviceHandle(const wstring& deviceInstanceId)
 {
 	HDEVINFO hDI;
 	SP_DEVICE_INTERFACE_DATA did{};
 	SP_DEVINFO_DATA dd{};
-	HANDLE hComm = NULL;
+	HANDLE handle = nullptr;
 
-	hDI = SetupDiGetClassDevs(&GUID_BLUETOOTHLE_DEVICE_INTERFACE, deviceInstanceId.c_str(), NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
+	hDI = SetupDiGetClassDevs(&GUID_BLUETOOTHLE_DEVICE_INTERFACE, deviceInstanceId.c_str(), nullptr, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
 
 	if (hDI == INVALID_HANDLE_VALUE)
 	{
 		stringstream stream;
 		stream << "Unable to open device information set for device interface UUID: ["
-			<< Util.convertToString(deviceInstanceId) << "]";
+			<< Utility::convertToString(deviceInstanceId) << "]";
 
-		Util.throwLastErrorException(stream.str());
+		Utility::throwLastErrorException(stream.str());
 	}
 
 	did.cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
@@ -62,7 +62,7 @@ HANDLE BleDevice::getBleDeviceHandle(wstring deviceInstanceId)
 
 	DWORD i = 0;
 
-	for (i = 0; SetupDiEnumDeviceInterfaces(hDI, NULL, &GUID_BLUETOOTHLE_DEVICE_INTERFACE, i, &did); i++)
+	for (i = 0; SetupDiEnumDeviceInterfaces(hDI, nullptr, &GUID_BLUETOOTHLE_DEVICE_INTERFACE, i, &did); i++)
 	{
 		SP_DEVICE_INTERFACE_DETAIL_DATA DeviceInterfaceDetailData{};
 
@@ -70,29 +70,39 @@ HANDLE BleDevice::getBleDeviceHandle(wstring deviceInstanceId)
 
 		DWORD size = 0;
 
-		if (!SetupDiGetDeviceInterfaceDetail(hDI, &did, NULL, 0, &size, 0))
+		if (!SetupDiGetDeviceInterfaceDetail(hDI, &did, nullptr, 0, &size, nullptr))
 		{
 			int err = GetLastError();
 
-			if (err == ERROR_NO_MORE_ITEMS) break;
-
-			PSP_DEVICE_INTERFACE_DETAIL_DATA pInterfaceDetailData = (PSP_DEVICE_INTERFACE_DETAIL_DATA)GlobalAlloc(GPTR, size);
-
-			if (pInterfaceDetailData != NULL)
+			if (err == ERROR_NO_MORE_ITEMS)
 			{
+				break;
+			}
+
+			auto pInterfaceDetailData = (PSP_DEVICE_INTERFACE_DETAIL_DATA)GlobalAlloc(GPTR, size);
+
+			if (pInterfaceDetailData != nullptr)
+			{
+				if (handle != INVALID_HANDLE_VALUE && handle != nullptr)
+				{
+					CloseHandle(handle);
+				}
+
 				pInterfaceDetailData->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA);
 
 				if (!SetupDiGetDeviceInterfaceDetail(hDI, &did, pInterfaceDetailData, size, &size, &dd))
+				{
 					break;
+				}
 
-				hComm = CreateFile(
+				handle = CreateFile(
 					pInterfaceDetailData->DevicePath,
 					GENERIC_WRITE | GENERIC_READ,
 					FILE_SHARE_READ | FILE_SHARE_WRITE,
-					NULL,
+					nullptr,
 					OPEN_EXISTING,
 					0,
-					NULL);
+					nullptr);
 
 				GlobalFree(pInterfaceDetailData);
 			}
@@ -105,16 +115,16 @@ HANDLE BleDevice::getBleDeviceHandle(wstring deviceInstanceId)
 
 	SetupDiDestroyDeviceInfoList(hDI);
 
-	if (i == 0)
+	if (handle == INVALID_HANDLE_VALUE || handle == nullptr)
 	{
 		stringstream msg;
 		msg << "Device interface UUID: ["
-			<< Util.convertToString(deviceInstanceId) << "] not found";
+			<< Utility::convertToString(deviceInstanceId) << "] not found";
 
 		throw WinBleException(msg.str());
 	}
 
-	return hComm;
+	return handle;
 }
 
 PBTH_LE_GATT_SERVICE BleDevice::getGattServices(HANDLE _hBleDeviceHandle, USHORT * _pGattServiceCount)
@@ -122,27 +132,31 @@ PBTH_LE_GATT_SERVICE BleDevice::getGattServices(HANDLE _hBleDeviceHandle, USHORT
 	HRESULT hr = BluetoothGATTGetServices(
 		_hBleDeviceHandle,
 		0,
-		NULL,
+		nullptr,
 		_pGattServiceCount,
 		BLUETOOTH_GATT_FLAG_NONE);
 
 	if (HRESULT_FROM_WIN32(ERROR_MORE_DATA) != hr)
 	{
-		Util.throwLastErrorException("Unable to determine the number of gatt services.");
+		stringstream msg;
+		msg << "Unable to determine the number of gatt services. Reason: ["
+			<< Utility::getLastErrorString(hr) << "]";
+
+		throw BleException(msg.str());
 	}
 
 	hr = BluetoothGATTGetServices(
 		_hBleDeviceHandle,
 		0,
-		NULL,
+		nullptr,
 		_pGattServiceCount,
 		BLUETOOTH_GATT_FLAG_NONE);
 
-	PBTH_LE_GATT_SERVICE pServiceBuffer = (PBTH_LE_GATT_SERVICE)
+	auto pServiceBuffer = (PBTH_LE_GATT_SERVICE)
 		malloc(sizeof(BTH_LE_GATT_SERVICE) * *_pGattServiceCount);
 
 	if (!_pGattServiceCount)
-		Util.handleMallocFailure(sizeof(BTH_LE_GATT_SERVICE) * *_pGattServiceCount);
+		Utility::handleMallocFailure(sizeof(BTH_LE_GATT_SERVICE) * *_pGattServiceCount);
 	else
 		RtlZeroMemory(pServiceBuffer, sizeof(BTH_LE_GATT_SERVICE) * *_pGattServiceCount);
 
@@ -156,51 +170,47 @@ PBTH_LE_GATT_SERVICE BleDevice::getGattServices(HANDLE _hBleDeviceHandle, USHORT
 
 	if (S_OK != hr)
 	{
-		Util.throwLastErrorException("Unable to determine the number of gatt services.");
+		Utility::throwHResultException("Unable to determine the number of gatt services.", hr);
 	}
 
 	return pServiceBuffer;
 }
 
-BleDevice::BleDevice(wstring deviceInstanceId) : _hBleDevice(getBleDeviceHandle(deviceInstanceId)), _deviceContext(_hBleDevice, deviceInstanceId)
+BleDevice::BleDevice(const wstring& deviceInstanceId) : 
+	_hBleDevice(new HandleWrapper(getBleDeviceHandle(deviceInstanceId))), 
+	_deviceContext(_hBleDevice->get(), deviceInstanceId),
+	_deviceInstanceId(deviceInstanceId)
 {
-	_deviceInstanceId = deviceInstanceId;
 }
 
 BleDevice::~BleDevice()
 {
-	for (BleGattService *s : _bleGattServices)
-		delete(s);
-
 	if (_pGattServiceBuffer)
 		free(_pGattServiceBuffer);
 
 	if (_hBleDevice)
-		CloseHandle(_hBleDevice);
+		delete(_hBleDevice);
 }
 
-wstring BleDevice::getDeviceIntstanceId()
+wstring BleDevice::getDeviceIntstanceId() const
 {
 	return _deviceInstanceId;
 }
 
 void BleDevice::enumerateBleServices()
 {
-	for (BleGattService *s : _bleGattServices)
-		delete(s);
-
 	_bleGattServices.clear();
 
 	if (_pGattServiceBuffer)
 		free(_pGattServiceBuffer);
 
-	_pGattServiceBuffer = getGattServices(_hBleDevice, &_gattServiceCount);
+	_pGattServiceBuffer = getGattServices(_hBleDevice->get(), &_gattServiceCount);
 
 	for (size_t i = 0; i < _gattServiceCount; i++)
-		_bleGattServices.push_back(new BleGattService(_deviceContext, &_pGattServiceBuffer[i]));
+		_bleGattServices.push_back(make_shared<BleGattService>(_deviceContext, &_pGattServiceBuffer[i]));
 }
 
-const BleDevice::BleGattServices & BleDevice::getBleGattServices()
+const BleDevice::BleGattServices & BleDevice::getBleGattServices() const
 {	
 	return _bleGattServices;
 }

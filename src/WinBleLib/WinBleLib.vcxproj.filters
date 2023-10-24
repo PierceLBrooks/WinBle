@@ -66,10 +66,10 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FileHandleWrapper.h">
+    <ClInclude Include="CallbackScope.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CallbackScope.h">
+    <ClInclude Include="HandleWrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="BluetoothRadioEnumerator.h">
@@ -122,7 +122,7 @@
     <ClCompile Include="BleGattNotificationData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FileHandleWrapper.cpp">
+    <ClCompile Include="HandleWrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="BluetoothRadioEnumerator.cpp">

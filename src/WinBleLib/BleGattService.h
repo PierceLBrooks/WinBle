@@ -26,14 +26,15 @@ SOFTWARE.
 #ifndef BLEGATTSERVICE_H
 #define BLEGATTSERVICE_H
 
-using namespace std;
-
 #include <Windows.h>
-#include <Bluetoothleapis.h>
-
-#include "BleGattCharacteristic.h"
+#include <bluetoothleapis.h>
 
 #include <list>
+
+#include "BleGattCharacteristic.h"
+#include "HandleWrapper.h"
+
+using namespace std;
 
 /// <summary>
 /// Represents a service of a bluetooth low energy device
@@ -42,7 +43,7 @@ class BleGattService
 {
 	private:
 		
-		HANDLE _hBleService = nullptr;
+		shared_ptr<HandleWrapper> _hBleService;
 
 		BleDeviceContext& _bleDeviceContext;
 
@@ -50,7 +51,7 @@ class BleGattService
 
 		PBTH_LE_GATT_SERVICE _pGattService = nullptr;
 
-		list<BleGattCharacteristic*> _bleGattCharacteristics;
+		list<shared_ptr<BleGattCharacteristic>> _bleGattCharacteristics;
 
 		PBTH_LE_GATT_CHARACTERISTIC _pGattCharacteristics = nullptr;
 
@@ -77,12 +78,12 @@ class BleGattService
 		/// <summary>
 		/// Gets the services UUID
 		/// </summary>
-		BTH_LE_UUID getServiceUuid();
+		BTH_LE_UUID getServiceUuid() const;
 
 		/// <summary>
 		/// Gets the services attribute handle
 		/// </summary>
-		USHORT getServiceAttributeHandle();
+		USHORT getServiceAttributeHandle() const;
 
 		/// <summary>
 		/// Enumerate this services list of ble characteristics
@@ -90,12 +91,12 @@ class BleGattService
 		/// <remarks>must be called prior to calling get characteristics</remarks>
 		void enumerateBleCharacteristics();
 
-		typedef list<BleGattCharacteristic*> BleGattCharacteristics;
+		using BleGattCharacteristics = list<shared_ptr<BleGattCharacteristic>>;
 
 		/// <summary>
 		/// Gets the services list of characteristics
 		/// </summary>
-		const BleGattCharacteristics& getBleCharacteristics();
+		const BleGattCharacteristics& getBleCharacteristics() const;
 };
 
 #endif

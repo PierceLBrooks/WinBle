@@ -24,8 +24,8 @@ SOFTWARE.
 */
 
 #include "BleGattCharacteristic.h"
+#include "HandleWrapper.h"
 #include "CallbackScope.h"
-#include "FileHandleWrapper.h"
 #include "BleFunctions.h"
 #include "WinBleException.h"
 #include "Utility.h"
@@ -43,7 +43,7 @@ PBTH_LE_GATT_DESCRIPTOR BleGattCharacteristic::getGattDescriptors(HANDLE hBleDev
 		hBleDeviceHandle,
 		pGattCharacteristic,
 		0,
-		NULL,
+		nullptr,
 		&expectedDescriptorBufferCount,
 		BLUETOOTH_GATT_FLAG_NONE);
 
@@ -51,11 +51,7 @@ PBTH_LE_GATT_DESCRIPTOR BleGattCharacteristic::getGattDescriptors(HANDLE hBleDev
 	{
 		if (HRESULT_FROM_WIN32(ERROR_MORE_DATA) != hr)
 		{
-			stringstream msg;
-			msg << "Unable to determine the number of gatt descriptors. Reason: ["
-				<< Util.getLastErrorString(hr) << "]";
-
-			throw WinBleException(msg.str());
+			Utility::throwHResultException("Unable to determine the number of gatt descriptors.", hr);
 		}
 		
 		if (expectedDescriptorBufferCount > 0)
@@ -64,9 +60,9 @@ PBTH_LE_GATT_DESCRIPTOR BleGattCharacteristic::getGattDescriptors(HANDLE hBleDev
 				malloc(expectedDescriptorBufferCount
 					* sizeof(BTH_LE_GATT_DESCRIPTOR));
 
-			if (NULL == pDescriptorBuffer)
+			if (pDescriptorBuffer == nullptr)
 			{
-				Util.handleMallocFailure(sizeof(PBTH_LE_GATT_DESCRIPTOR) * expectedDescriptorBufferCount);
+				Utility::handleMallocFailure(sizeof(PBTH_LE_GATT_DESCRIPTOR) * expectedDescriptorBufferCount);
 			}
 			else
 			{
@@ -83,7 +79,7 @@ PBTH_LE_GATT_DESCRIPTOR BleGattCharacteristic::getGattDescriptors(HANDLE hBleDev
 
 			if (S_OK != hr)
 			{
-				Util.throwLastErrorException("Unable to determine the number of gatt services.");
+				Utility::throwHResultException("Unable to determine the number of gatt services.", hr);
 			}
 
 			if (*pGattDescriptorsCount != expectedDescriptorBufferCount) {
@@ -95,10 +91,10 @@ PBTH_LE_GATT_DESCRIPTOR BleGattCharacteristic::getGattDescriptors(HANDLE hBleDev
 	return pDescriptorBuffer;
 }
 
-VOID WINAPI BleGattCharacteristic::NotificationCallback(BTH_LE_GATT_EVENT_TYPE eventType, PVOID eventOutParameter, PVOID context)
+VOID WINAPI BleGattCharacteristic::NotificationCallback(BTH_LE_GATT_EVENT_TYPE, PVOID eventOutParameter, PVOID context)
 {
-	BLUETOOTH_GATT_VALUE_CHANGED_EVENT *pEvent = (BLUETOOTH_GATT_VALUE_CHANGED_EVENT *)eventOutParameter;
-	CallbackContext* callbackContext = static_cast<CallbackContext*>(context);
+	auto *pEvent = (BLUETOOTH_GATT_VALUE_CHANGED_EVENT *)eventOutParameter;
+	auto* callbackContext = static_cast<CallbackContext*>(context);
 
 	// Assures that after unregisterNotificationHandler is called, no more callbacks will be invoked.
 
@@ -114,7 +110,7 @@ VOID WINAPI BleGattCharacteristic::NotificationCallback(BTH_LE_GATT_EVENT_TYPE e
 	
 	if (pEvent->ChangedAttributeHandle == callbackContext->getGattCharacteristic()->AttributeHandle)
 	{
-		BleGattNotificationData* notification = new BleGattNotificationData(pEvent->CharacteristicValue);
+		auto notification = new BleGattNotificationData(pEvent->CharacteristicValue);
 
 		callbackContext->getNotificationHandler()(*notification);
 	}
@@ -124,9 +120,9 @@ BleGattCharacteristic::BleGattCharacteristic(
 	BleDeviceContext &bleDeviceContext,
 	PBTH_LE_GATT_SERVICE pGattService,
 	PBTH_LE_GATT_CHARACTERISTIC pGattCharacteristic) :
-	_pGattCharacteristic(pGattCharacteristic),
 	_bleDeviceContext(bleDeviceContext),
 	_eventHandle(INVALID_HANDLE_VALUE),
+	_pGattCharacteristic(pGattCharacteristic),
 	_pGattService(pGattService)
 {
 }
@@ -136,69 +132,66 @@ BleGattCharacteristic::~BleGattCharacteristic()
 	if (_eventHandle != INVALID_HANDLE_VALUE)
 		BluetoothGATTUnregisterEvent(_eventHandle, BLUETOOTH_GATT_FLAG_NONE);
 
-	for (BleGattDescriptor *d : _bleGattDescriptors)
-		delete(d);
-
 	if (_pGattDescriptors)
 		free(_pGattDescriptors);
 }
 
-USHORT BleGattCharacteristic::getServiceHandle()
+USHORT BleGattCharacteristic::getServiceHandle() const
 {
 	return _pGattCharacteristic->ServiceHandle;
 }
 
-BTH_LE_UUID BleGattCharacteristic::getCharacteristicUuid()
+BTH_LE_UUID BleGattCharacteristic::getCharacteristicUuid() const
 {
 	return _pGattCharacteristic->CharacteristicUuid;
 }
 
-USHORT BleGattCharacteristic::getAttributeHandle()
+USHORT BleGattCharacteristic::getAttributeHandle() const
 {
 	return _pGattCharacteristic->AttributeHandle;
 }
 
-USHORT BleGattCharacteristic::getCharacteristicValueHandle()
+USHORT BleGattCharacteristic::getCharacteristicValueHandle() const
 {
 	return _pGattCharacteristic->CharacteristicValueHandle;
 }
 
-BOOLEAN BleGattCharacteristic::getIsBroadcastable()
+BOOLEAN BleGattCharacteristic::getIsBroadcastable() const
 {
 	return _pGattCharacteristic->IsBroadcastable;
 }
 
-BOOLEAN BleGattCharacteristic::getIsReadable()
+BOOLEAN BleGattCharacteristic::getIsReadable() const
 {
 	return _pGattCharacteristic->IsReadable;
 }
 
-BOOLEAN BleGattCharacteristic::getIsWritable()
+BOOLEAN BleGattCharacteristic::getIsWritable() const
 {
 	return _pGattCharacteristic->IsWritable;
 }
 
-BOOLEAN BleGattCharacteristic::getIsWritableWithoutResponse()
+BOOLEAN BleGattCharacteristic::getIsWritableWithoutResponse() const
 {
 	return _pGattCharacteristic->IsWritableWithoutResponse;
 }
 
-BOOLEAN BleGattCharacteristic::getIsSignedWritable()
+BOOLEAN BleGattCharacteristic::getIsSignedWritable() const
 {
 	return _pGattCharacteristic->IsSignedWritable;
 }
 
-BOOLEAN BleGattCharacteristic::getIsNotifiable()
+BOOLEAN BleGattCharacteristic::getIsNotifiable() const
 {
 	return _pGattCharacteristic->IsNotifiable;
 }
 
-BOOLEAN BleGattCharacteristic::getIsIndicatable()
+BOOLEAN BleGattCharacteristic::getIsIndicatable() const
 {
 	return _pGattCharacteristic->IsIndicatable;
 }
 
-BOOLEAN BleGattCharacteristic::getHasExtendedProperties()
+BOOLEAN BleGattCharacteristic::getHasExtendedProperties() const
 {
 	return _pGattCharacteristic->HasExtendedProperties;
 }
@@ -216,7 +209,7 @@ void BleGattCharacteristic::registerNotificationHandler(function<void(BleGattNot
 
 		_callbackContext.Register(std::move(notificationHandler), _pGattCharacteristic);
 
-		FileHandleWrapper hBleService(
+		HandleWrapper hBleService(
 			openBleInterfaceHandle(
 				mapServiceUUID(&_pGattService->ServiceUuid), 
 				GENERIC_READ | GENERIC_WRITE));
@@ -224,13 +217,9 @@ void BleGattCharacteristic::registerNotificationHandler(function<void(BleGattNot
 		HRESULT hr = BluetoothGATTRegisterEvent(hBleService.get(), CharacteristicValueChangedEvent,
 			&registration, &NotificationCallback, &_callbackContext, &_eventHandle, BLUETOOTH_GATT_FLAG_NONE);
 
-		if (S_OK != hr)
+		if (hr != S_OK)
 		{
-			stringstream msg;
-			msg << "Unable to subscribe to the characteristic. Reason: ["
-				<< Util.getLastErrorString(hr) << "]";
-
-			throw WinBleException(msg.str());
+			Utility::throwHResultException("Unable to subscribe to the characteristic.", hr);
 		}
 	}
 	else
@@ -251,11 +240,7 @@ void BleGattCharacteristic::unregisterNotificationHandler()
 
 		if (S_OK != hr)
 		{
-			stringstream msg;
-			msg << "Unable to unsubscribe from the characteristic. Reason: ["
-				<< Util.getLastErrorString(hr) << "]";
-
-			throw WinBleException(msg.str());
+			Utility::throwHResultException("Unable to unsubscribe from the characteristic.", hr);
 		}
 	}
 }
@@ -267,7 +252,7 @@ BleGattCharacteristicValue BleGattCharacteristic::getValue()
 
 	if (_pGattCharacteristic->IsReadable) 
 	{
-		FileHandleWrapper hBleService(
+		HandleWrapper hBleService(
 			openBleInterfaceHandle(mapServiceUUID(&_pGattService->ServiceUuid),
 				GENERIC_READ));
 
@@ -275,24 +260,20 @@ BleGattCharacteristicValue BleGattCharacteristic::getValue()
 			hBleService.get(),
 			_pGattCharacteristic,
 			0,
-			NULL,
+			nullptr,
 			&charValueDataSize,
 			BLUETOOTH_GATT_FLAG_NONE);
 
 		if (HRESULT_FROM_WIN32(ERROR_MORE_DATA) != hr) 
 		{
-			stringstream msg;
-			msg << "Unable to determine the characteristic value size. Reason: ["
-				<< Util.getLastErrorString(hr) << "]";
-
-			throw WinBleException(msg.str());
+			Utility::throwHResultException("Unable to determine the characteristic value size.", hr);
 		}
 
 		pCharValueBuffer = (PBTH_LE_GATT_CHARACTERISTIC_VALUE)malloc(charValueDataSize);
 
-		if (NULL == pCharValueBuffer) 
+		if (pCharValueBuffer == nullptr) 
 		{
-			Util.handleMallocFailure(charValueDataSize);
+			Utility::handleMallocFailure(charValueDataSize);
 		}
 		else 
 		{
@@ -304,16 +285,12 @@ BleGattCharacteristicValue BleGattCharacteristic::getValue()
 			_pGattCharacteristic,
 			(ULONG)charValueDataSize,
 			pCharValueBuffer,
-			NULL,
+			nullptr,
 			BLUETOOTH_GATT_FLAG_NONE);
 
 		if (S_OK != hr)
 		{
-			stringstream msg;
-			msg << "Unable to read the characteristic value. Reason: ["
-				<< Util.getLastErrorString(hr) << "]";
-
-			throw WinBleException(msg.str());
+			Utility::throwHResultException("Unable to read the characteristic value.", hr);
 		}
 	}
 	else
@@ -324,22 +301,22 @@ BleGattCharacteristicValue BleGattCharacteristic::getValue()
 	return BleGattCharacteristicValue(pCharValueBuffer);
 }
 
-void BleGattCharacteristic::setValue(UCHAR * data, ULONG size)
+void BleGattCharacteristic::setValue(UCHAR const * data, ULONG size)
 {
 	if (_pGattCharacteristic->IsSignedWritable || _pGattCharacteristic->IsWritable || _pGattCharacteristic->IsWritableWithoutResponse)
 	{
 		size_t required_size = sizeof(BTH_LE_GATT_CHARACTERISTIC_VALUE) + size;
 
-		PBTH_LE_GATT_CHARACTERISTIC_VALUE gatt_value = (PBTH_LE_GATT_CHARACTERISTIC_VALUE)malloc(required_size);
+		auto gatt_value = (PBTH_LE_GATT_CHARACTERISTIC_VALUE)malloc(required_size);
 
-		if (gatt_value != NULL)
+		if (gatt_value != nullptr)
 		{
 			ZeroMemory(gatt_value, required_size);
 
-			gatt_value->DataSize = (ULONG)size;
+			gatt_value->DataSize = size;
 			memcpy(gatt_value->Data, data, size);
 
-			FileHandleWrapper hBleService(
+			HandleWrapper hBleService(
 				openBleInterfaceHandle(mapServiceUUID(&_pGattService->ServiceUuid),
 					GENERIC_WRITE));
 
@@ -349,11 +326,7 @@ void BleGattCharacteristic::setValue(UCHAR * data, ULONG size)
 
 			if (HRESULT_FROM_WIN32(S_OK) != hr)
 			{
-				stringstream msg;
-				msg << "Unable to write the characteristic value. Reason: ["
-					<< Util.getLastErrorString(hr) << "]";
-
-				throw WinBleException(msg.str());
+				Utility::throwHResultException("Unable to read the characteristic value.", hr);
 			}
 		}
 		else
@@ -369,9 +342,6 @@ void BleGattCharacteristic::setValue(UCHAR * data, ULONG size)
 
 void BleGattCharacteristic::enumerateBleDescriptors()
 {
-	for (BleGattDescriptor *d : _bleGattDescriptors)
-		delete(d);
-
 	if (_pGattDescriptors)
 		free(_pGattDescriptors);
 
@@ -379,11 +349,11 @@ void BleGattCharacteristic::enumerateBleDescriptors()
 	_pGattDescriptors = getGattDescriptors(_bleDeviceContext.getBleDeviceHandle(), _pGattCharacteristic, &_gattDescriptorsCount);
 
 	for (size_t i = 0; i < _gattDescriptorsCount; i++)
-		_bleGattDescriptors.push_back(new BleGattDescriptor(_bleDeviceContext, _pGattService, &_pGattDescriptors[i]));
+		_bleGattDescriptors.push_back(make_shared<BleGattDescriptor>(_bleDeviceContext, _pGattService, &_pGattDescriptors[i]));
 
 }
 
-const BleGattCharacteristic::BleGattDescriptors& BleGattCharacteristic::getBleDescriptors()
+const BleGattCharacteristic::BleGattDescriptors& BleGattCharacteristic::getBleDescriptors() const
 {
 	return _bleGattDescriptors;
 }
