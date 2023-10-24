@@ -24,7 +24,7 @@ SOFTWARE.
 */
 
 #include "Utility.h"
-#include "WinBleException.h"
+#include "BleException.h"
 
 #include <Windows.h>
 #include <codecvt>
@@ -72,7 +72,7 @@ void Utility::handleMallocFailure(unsigned long size)
 	stringstream msg;
 	msg << "Unable to allocate [" << size << "] bytes";
 
-	throw WinBleException(msg.str());
+	throw BleException(msg.str());
 }
 
 void Utility::throwLastErrorException(const string& message)
@@ -80,17 +80,6 @@ void Utility::throwLastErrorException(const string& message)
 	stringstream stream;
 	DWORD lasterror = GetLastError();
 	stream << message << 
-		" LastError: " << std::hex << lasterror <<
-		" Reason: [" << getLastErrorString(lasterror) << "]";
-
-	throw WinBleException(stream.str());
-}
-
-void Utility::throwLastErrorException(const string& message)
-{
-	stringstream stream;
-	DWORD lasterror = GetLastError();
-	stream << message <<
 		" LastError: " << std::hex << lasterror <<
 		" Reason: [" << getLastErrorString(lasterror) << "]";
 

@@ -27,7 +27,7 @@ SOFTWARE.
 #include <SetupAPI.h>
 #include <bluetoothapis.h>
 
-#include "WinBleException.h"
+#include "BleException.h"
 #include "BleDevice.h"
 #include "Utility.h"
 
@@ -108,7 +108,7 @@ HANDLE BleDevice::getBleDeviceHandle(const wstring& deviceInstanceId)
 			}
 			else
 			{
-				throw WinBleException("Unable to allocate device interface detail data");
+				throw BleException("Unable to allocate device interface detail data");
 			}
 		}
 	}
@@ -121,7 +121,7 @@ HANDLE BleDevice::getBleDeviceHandle(const wstring& deviceInstanceId)
 		msg << "Device interface UUID: ["
 			<< Utility::convertToString(deviceInstanceId) << "] not found";
 
-		throw WinBleException(msg.str());
+		throw BleException(msg.str());
 	}
 
 	return handle;

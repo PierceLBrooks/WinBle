@@ -148,7 +148,7 @@
     <ClInclude Include="BleDeviceContext.h" />
     <ClInclude Include="BleDeviceEnumerator.h" />
     <ClInclude Include="BleDeviceInfo.h" />
-    <ClInclude Include="WinBleException.h" />
+    <ClInclude Include="BleException.h" />
     <ClInclude Include="BleFunctions.h" />
     <ClInclude Include="BleGattCharacteristic.h" />
     <ClInclude Include="BleGattCharacteristicValue.h" />
@@ -171,7 +171,7 @@
     <ClCompile Include="BleDeviceContext.cpp" />
     <ClCompile Include="BleDeviceEnumerator.cpp" />
     <ClCompile Include="BleDeviceInfo.cpp" />
-    <ClCompile Include="WinBleException.cpp" />
+    <ClCompile Include="BleException.cpp" />
     <ClCompile Include="BleFunctions.cpp" />
     <ClCompile Include="BleGattCharacteristic.cpp" />
     <ClCompile Include="BleGattCharacteristicValue.cpp" />

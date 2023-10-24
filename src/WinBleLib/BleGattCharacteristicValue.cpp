@@ -24,12 +24,12 @@ SOFTWARE.
 */
 
 #include "BleGattCharacteristicValue.h"
-#include "WinBleException.h"
+#include "BleException.h"
 
 BleGattCharacteristicValue::BleGattCharacteristicValue(PBTH_LE_GATT_CHARACTERISTIC_VALUE _pGattCharacteristicValue)
 {
 	if (!_pGattCharacteristicValue)
-		throw WinBleException("_pGattCharacteristicValue is nullptr");
+		throw BleException("_pGattCharacteristicValue is nullptr");
 
 	pGattCharacteristicValue = _pGattCharacteristicValue;
 }

@@ -25,7 +25,7 @@ SOFTWARE.
 
 #include "BleGattService.h"
 #include "BleFunctions.h"
-#include "WinBleException.h"
+#include "BleException.h"
 #include "Utility.h"
 
 #include <sstream>
@@ -84,7 +84,7 @@ PBTH_LE_GATT_CHARACTERISTIC BleGattService::getGattCharacteristics(HANDLE hBleDe
 
 			if (*pGattCharcteristicsCount != expectedCharBufferCount)
 			{
-				throw WinBleException("characteristic count expected and characteristic count actual mismatch");
+				throw BleException("characteristic count expected and characteristic count actual mismatch");
 			}
 		}
 	}
@@ -95,7 +95,7 @@ BleGattService::BleGattService(BleDeviceContext& bleDeviceContext, PBTH_LE_GATT_
 	:_bleDeviceContext(bleDeviceContext)
 {
 	if (!pGattService)
-		throw WinBleException("pGattService is nullptr");
+		throw BleException("pGattService is nullptr");
 
 	_pGattService = pGattService;
 }

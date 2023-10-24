@@ -26,7 +26,7 @@ SOFTWARE.
 #include "BleGattDescriptor.h"
 #include "HandleWrapper.h"
 #include "BleFunctions.h"
-#include "WinBleException.h"
+#include "BleException.h"
 #include "Utility.h"
 
 #include <sstream>
@@ -59,7 +59,7 @@ BleGattDescriptor::BleGattDescriptor(
 	_pGattService(pGattService)
 {
 	if (!pGattDescriptor)
-		throw WinBleException("pGattDescriptor is nullptr");
+		throw BleException("pGattDescriptor is nullptr");
 	
 	_pGattDescriptor = pGattDescriptor;
 }

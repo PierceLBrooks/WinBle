@@ -23,9 +23,9 @@ SOFTWARE.
 
 */
 
-#include "WinBleException.h"
+#include "BleException.h"
 
-WinBleException::WinBleException(const string & _message) :
+BleException::BleException(const string & _message) :
 	std::runtime_error(_message)
 {
 }

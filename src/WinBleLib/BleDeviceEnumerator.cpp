@@ -30,7 +30,7 @@ SOFTWARE.
 #include <bluetoothleapis.h>
 
 #include "BleDeviceEnumerator.h"
-#include "WinBleException.h"
+#include "BleException.h"
 #include "Utility.h"
 
 #include <sstream>

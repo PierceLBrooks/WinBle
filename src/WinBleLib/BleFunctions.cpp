@@ -24,7 +24,7 @@ SOFTWARE.
 */
 
 #include "BleFunctions.h"
-#include "WinBleException.h"
+#include "BleException.h"
 #include "Utility.h"
 
 #include <windows.h>

@@ -25,9 +25,10 @@ SOFTWARE.
 
 #include <Utility.h>
 #include <BleDevice.h>
-#include <WinBleException.h>
+#include <BleException.h>
 #include <BleGattServices.h>
 #include <BleDeviceEnumerator.h>
+#include <BluetoothRadioEnumerator.h>
 
 #include <algorithm>
 #include <iostream>
@@ -193,8 +194,32 @@ void testSerialService(BleDevice::BleGattServices const& services)
 	}
 }
 
+void enumerateBluetoothRadios()
+{
+	try
+	{
+		RadioEnumerator.enumerate();
+
+		for (BluetoothRadio* i : RadioEnumerator.getBluetoothRadios())
+		{
+			wcout << "Name: " << i->getName()
+				<< " Address: " << i->getAddress().ullLong
+				<< " ClassOfDevice: " << i->getClassOfDevice()
+				<< " LmpSubVersion: " << i->getLmpSubVersion()
+				<< " Manufacturer: " << i->getManufacturer() << endl;
+		}
+	}
+	catch (BleException const& e)
+	{
+		cout << endl << "An error occurred:" << endl;
+		cout << "  [" << e.what() << "]" << endl;
+	}
+}
+
 int main()
 {
+	enumerateBluetoothRadios();
+
 	try
 	{
 		BleDeviceEnumerator::enumerate();
@@ -230,4 +255,6 @@ int main()
 		cout << endl << "An error occurred:" << endl;
 		cout << "  [" << e.what() << "]" << endl;
 	}
+
+	return 0;
 }

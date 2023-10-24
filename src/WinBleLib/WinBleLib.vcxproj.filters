@@ -51,7 +51,7 @@
     <ClInclude Include="BleGattServices.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WinBleException.h">
+    <ClInclude Include="BleException.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Utility.h">
@@ -110,7 +110,7 @@
     <ClCompile Include="BleGattService.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WinBleException.cpp">
+    <ClCompile Include="BleException.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Utility.cpp">

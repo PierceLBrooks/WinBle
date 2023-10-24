@@ -28,7 +28,7 @@ SOFTWARE.
 
 #include "Utility.h"
 #include "BluetoothRadio.h"
-#include "WinBleException.h"
+#include "BleException.h"
 
 #include <sstream>
 
@@ -38,7 +38,7 @@ void BluetoothRadio::getRadioInformation()
 {
 	if (BluetoothGetRadioInfo(_hBluetoothRadio, &_radio_info) != ERROR_SUCCESS)
 	{
-		Util.throwLastErrorException("Unable to get handle to bluetooth radio info.");
+		Utility::throwLastErrorException("Unable to get handle to bluetooth radio info.");
 	}
 }
 
@@ -46,7 +46,7 @@ BluetoothRadio::BluetoothRadio(HANDLE hBluetoothRadio)
 {
 	if (hBluetoothRadio == NULL)
 	{
-		throw WinBleException("Handle cannot be NULL");
+		throw BleException("Handle cannot be NULL");
 	}
 
 	_hBluetoothRadio = hBluetoothRadio;

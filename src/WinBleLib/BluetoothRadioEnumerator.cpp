@@ -31,7 +31,7 @@ SOFTWARE.
 
 #include "Utility.h"
 #include "BluetoothRadio.h"
-#include "WinBleException.h"
+#include "BleException.h"
 #include "BluetoothRadioEnumerator.h"
 
 #include <sstream>
@@ -73,12 +73,12 @@ void BluetoothRadioEnumerator::enumerate()
 
 		if (error != ERROR_SUCCESS && error != ERROR_NO_MORE_ITEMS)
 		{
-			Util.throwLastErrorException("Unable to get handle to bluetooth radio.");
+			Utility::throwLastErrorException("Unable to get handle to bluetooth radio.");
 		}
 	}
 	else
 	{
-		Util.throwLastErrorException("Unable to get handle to bluetooth find.");
+		Utility::throwLastErrorException("Unable to get handle to bluetooth find.");
 	}
 }
 

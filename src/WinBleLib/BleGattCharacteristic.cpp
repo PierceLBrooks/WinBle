@@ -27,7 +27,7 @@ SOFTWARE.
 #include "HandleWrapper.h"
 #include "CallbackScope.h"
 #include "BleFunctions.h"
-#include "WinBleException.h"
+#include "BleException.h"
 #include "Utility.h"
 
 #include <sstream>
@@ -83,7 +83,7 @@ PBTH_LE_GATT_DESCRIPTOR BleGattCharacteristic::getGattDescriptors(HANDLE hBleDev
 			}
 
 			if (*pGattDescriptorsCount != expectedDescriptorBufferCount) {
-				throw WinBleException("descriptor count expected and descriptor count actual mismatch");
+				throw BleException("descriptor count expected and descriptor count actual mismatch");
 			}
 		}
 	}
@@ -224,7 +224,7 @@ void BleGattCharacteristic::registerNotificationHandler(function<void(BleGattNot
 	}
 	else
 	{
-		throw WinBleException("characteristic is not notifiable or indicatable");
+		throw BleException("characteristic is not notifiable or indicatable");
 	}
 }
 
@@ -295,7 +295,7 @@ BleGattCharacteristicValue BleGattCharacteristic::getValue()
 	}
 	else
 	{
-		throw WinBleException("characteristic is not readable");
+		throw BleException("characteristic is not readable");
 	}
 
 	return BleGattCharacteristicValue(pCharValueBuffer);
@@ -331,12 +331,12 @@ void BleGattCharacteristic::setValue(UCHAR const * data, ULONG size)
 		}
 		else
 		{
-			throw WinBleException("Unable to allocate characteristic value memory");
+			throw BleException("Unable to allocate characteristic value memory");
 		}
 	}
 	else
 	{
-		throw WinBleException("characteristic is not writable");
+		throw BleException("characteristic is not writable");
 	}
 }
 
